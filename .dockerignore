@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Build output
+target/
+build/
+out/
+
+# Environment files
+.env
+.env.*
+
+# Docker
+docker-compose.yml
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Docs
+README.md
+LICENSE
+*.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
