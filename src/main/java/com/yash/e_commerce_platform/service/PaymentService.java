@@ -1,6 +1,9 @@
 package com.yash.e_commerce_platform.service;
 
+import com.yash.e_commerce_platform.exception.EmptyCartException;
+import com.yash.e_commerce_platform.exception.PaymentException;
 import com.yash.e_commerce_platform.exception.ResourceNotFoundException;
+import com.yash.e_commerce_platform.exception.UnauthorizedAccessException;
 import com.yash.e_commerce_platform.model.Order;
 import com.yash.e_commerce_platform.model.PaymentStatus;
 import com.yash.e_commerce_platform.repository.OrderRepository;
@@ -20,25 +23,25 @@ public class PaymentService {
     private final OrderRepository orderRepository;
 
     public Map<String, String> processPayment(Long orderId,
-                                              String paymentMethodId,
-                                              String email) {
+            String paymentMethodId,
+            String email) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
         if (!order.getUser().getEmail().equals(email)) {
-            throw new RuntimeException("Access denied");
+            throw new UnauthorizedAccessException("Access denied");
         }
         if (order.getPaymentStatus() == PaymentStatus.PAID) {
-            throw new RuntimeException("Order is already paid");
+            throw new EmptyCartException("Order is already paid");
         }
 
         try {
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                    .setAmount((long) (order.getTotalPrice() * 100))   // cents
+                    .setAmount((long) (order.getTotalPrice() * 100)) // cents
                     .setCurrency("usd")
                     .setDescription("Order #" + order.getId())
                     .setPaymentMethod(paymentMethodId)
-                    .setConfirm(true)                                  // charge immediately
+                    .setConfirm(true) // charge immediately
                     .addPaymentMethodType("card")
                     .build();
 
@@ -57,12 +60,12 @@ public class PaymentService {
             } else {
                 order.setPaymentStatus(PaymentStatus.FAILED);
                 orderRepository.save(order);
-                throw new RuntimeException("Payment incomplete – status: " + intent.getStatus());
+                throw new PaymentException("Payment incomplete – status: " + intent.getStatus());
             }
         } catch (StripeException e) {
             order.setPaymentStatus(PaymentStatus.FAILED);
             orderRepository.save(order);
-            throw new RuntimeException("Stripe error: " + e.getMessage());
+            throw new PaymentException("Stripe error: " + e.getMessage());
         }
     }
 }

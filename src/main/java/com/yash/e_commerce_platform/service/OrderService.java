@@ -1,11 +1,13 @@
 package com.yash.e_commerce_platform.service;
 
 import com.yash.e_commerce_platform.dto.OrderRequest;
+import com.yash.e_commerce_platform.exception.EmptyCartException;
 import com.yash.e_commerce_platform.exception.InsufficientStockException;
 import com.yash.e_commerce_platform.exception.ResourceNotFoundException;
+import com.yash.e_commerce_platform.exception.UnauthorizedAccessException;
 import com.yash.e_commerce_platform.model.*;
-        import com.yash.e_commerce_platform.repository.*;
-        import jakarta.transaction.Transactional;
+import com.yash.e_commerce_platform.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +30,7 @@ public class OrderService {
         Cart cart = cartService.getCart(email);
 
         if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+            throw new EmptyCartException("Cart is empty");
         }
 
         List<OrderItem> orderItems = new ArrayList<>();
@@ -78,7 +80,7 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         if (!order.getUser().getEmail().equals(email)) {
-            throw new RuntimeException("Access denied to this order");
+            throw new UnauthorizedAccessException("Access denied to this order");
         }
         return order;
     }
